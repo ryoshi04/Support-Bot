@@ -1,0 +1,41 @@
+import discord
+from discord.ext import commands
+
+intents = discord.Intents.default()
+intents.messages = True
+intents.guilds = True
+intents.reactions = True
+
+bot = commands.Bot(command_prefix='/', intents=intents)
+
+# Dictionary to store limited ticket usage
+ticket_usage_limit = {}
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')
+
+@bot.command()
+async def limiteduser(ctx, ticket_name: str, limit: int):
+    # Set the usage limit for the specified ticket name
+    ticket_usage_limit[ticket_name] = limit
+    await ctx.send(f"Usage limit set for ticket '{ticket_name}': {limit}")
+
+@bot.command()
+async def ticket(ctx, ticket_name: str):
+    # Check if ticket usage limit is set
+    if ticket_name in ticket_usage_limit:
+        # Check if the user has exceeded the usage limit
+        if ctx.author.id in ticket_usage_limit[ticket_name]:
+            await ctx.send("You have exceeded the usage limit for this ticket.")
+            return
+        # Increment ticket usage count for the user
+        ticket_usage_limit[ticket_name][ctx.author.id] = ticket_usage_limit[ticket_name].get(ctx.author.id, 0) + 1
+        # Check if the usage limit has been reached
+        if ticket_usage_limit[ticket_name][ctx.author.id] > ticket_usage_limit[ticket_name]:
+            await ctx.send("You have exceeded the usage limit for this ticket.")
+            return
+
+    await ctx.send(f"Ticket '{ticket_name}' opened by {ctx.author.mention}")
+
+bot.run('MTIzMDk1MDI1NTEyNjY0MjczMA.G8sj06.fFh8X_cFrcRnlEIzaUZMxfHGdmKRPENlMKgzJQ')
